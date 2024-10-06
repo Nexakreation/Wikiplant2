@@ -1,0 +1,17 @@
+nav
+
+                    <li>
+                        <select
+                            value={language}
+                            onChange={handleLanguageChange}
+                            className="bg-green-500 text-white border border-green-400 rounded p-1"
+                        >
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                            <option value="it">Italiano</option>
+                            <option value="ja">日本語</option>
+                            /* Add more language options as needed */
+                        </select>
+                    </li>
