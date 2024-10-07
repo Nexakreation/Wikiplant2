@@ -1,15 +1,10 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [language, setLanguage] = useState('en');
-
-    useEffect(() => {
-        setLanguage(navigator.language.split('-')[0]);
-    }, []);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -38,7 +33,7 @@ export default function Navbar() {
                     </div>
                 </div>
                 {isMenuOpen && (
-                    <div className="lg:hidden mt-4 ">
+                    <div className="lg:hidden mt-4">
                         <Link href="/" className="block text-white hover:text-green-200 py-2">Home</Link>
                         <Link href="/random-facts" className="block text-white hover:text-green-200 py-2">Random Facts</Link>
                         <Link href="/about" className="block text-white hover:text-green-200 py-2">About</Link>
