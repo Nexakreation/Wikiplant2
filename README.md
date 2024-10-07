@@ -13,6 +13,8 @@ pnpm dev
 # or
 bun dev
 ```
+before run or deploy make sure to make .env.local file and add content:
+NEXT_PUBLIC_GOOGLE_API_KEY="YOUR_ACTUAL_API_KEY"
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
