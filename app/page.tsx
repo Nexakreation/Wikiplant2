@@ -314,9 +314,9 @@ ${additionalInfo}`;
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24 pb-6 ">
-      <h1 className="text-5xl font-bold mb-4 text-green-800">Plant Identifier</h1>
-      <p className="text-xl text-green-700 mb-8 text-center max-w-2xl">
+    <main className="flex min-h-screen flex-col items-center justify-between pt-8 p-4 sm:p-2 sm:pt-8">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-green-800">Plant Identifier</h1>
+      <p className="text-base sm:text-lg md:text-xl text-green-700 mb-8 text-center max-w-2xl">
         Discover the wonders of nature! Search for a plant, upload or capture an image, and we&apos;ll provide detailed information about its characteristics and care.
       </p>
       <SearchBar onSearch={handleSearch} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -324,9 +324,9 @@ ${additionalInfo}`;
         <ImageUpload setPlantInfo={setPlantInfo} setImageUrl={setImageUrl} />
       </div>
       {isLoading && <BookLoader />}
-      {error && <p className="mt-4 text-red-600 font-semibold">{error}</p>}
+      {error && <p className="mt-4 text-red-600 font-semibold text-sm sm:text-base">{error}</p>}
       {imageUrl && (
-        <div className="mt-8 mb-8 relative w-32 h-32">
+        <div className="mt-8 mb-8 relative w-24 h-24 sm:w-32 sm:h-32">
           <Image 
             src={imageUrl} 
             alt="Plant" 
@@ -340,10 +340,10 @@ ${additionalInfo}`;
 
       {multiSpeciesData && multiSpeciesData.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Multiple Species Found</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Multiple Species Found</h2>
           {multiSpeciesData.map((species, index) => (
-            <div key={index} className="mb-4 p-4 border rounded flex">
-              <div className="mr-4 relative w-32 h-32">
+            <div key={index} className="mb-4 p-4 border rounded flex flex-col sm:flex-row">
+              <div className="mb-4 sm:mb-0 sm:mr-4 relative w-full sm:h-auto sm:w-2/5 h-32">
                 <Image 
                   src={species.imageUrl} 
                   alt={species.commonName} 
@@ -352,13 +352,13 @@ ${additionalInfo}`;
                   className="rounded-lg shadow-lg"
                 />
               </div>
-              <div>
-                <h3 className="text-xl font-semibold">{species.commonName}</h3>
-                <p><strong>Scientific Name:</strong> {species.scientificName}</p>
-                <p>{species.description}</p>
+              <div className="w-full sm:w-3/5">
+                <h3 className="text-lg sm:text-xl font-semibold">{species.commonName}</h3>
+                <p className="text-sm sm:text-base"><strong>Scientific Name:</strong> {species.scientificName}</p>
+                <p className="text-sm sm:text-base">{species.description}</p>
                 <button
                   onClick={() => handleSpeciesSelection(species)}
-                  className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
+                  className="mt-2 bg-blue-500 text-white px-4 py-2 rounded text-sm sm:text-base"
                 >
                   Get Details
                 </button>

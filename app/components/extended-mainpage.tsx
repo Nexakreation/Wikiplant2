@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function Component() {
   return (
-    <div className="min-h-screen bg-transparent text-green-400 p-8 mt-6">
+    <div className="min-h-screen bg-transparent text-green-400 p-2 mt-6 sm:p-8">
       <div className="max-w-3xl mx-auto space-y-12">
         <section className="flex items-start space-x-4">
           <div className="flex-shrink-0 bg-green-800 rounded-full p-2">

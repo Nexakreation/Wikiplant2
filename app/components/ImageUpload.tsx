@@ -126,25 +126,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setPlantInfo, setImageUrl }) 
   };
 
   return (
-    <div className="mb-0 ">
-      <div {...getRootProps()} className={`p-8 border-2 border-dashed  rounded-lg ${isDragActive ? 'border-blue-500 bg-gray-100' : 'border-green-600'}`}>
+    <div className="mb-4 sm:mb-8 px-4 sm:px-0">
+      <div {...getRootProps()} className={`p-4 sm:p-8 border-2 border-dashed rounded-lg ${isDragActive ? 'border-blue-500 bg-gray-100' : 'border-green-600'}`}>
         <input {...getInputProps()} />
         {isDragActive ? (
-          <p className="text-blue-500">Drop the image here ...</p>
+          <p className="text-blue-500 text-sm sm:text-base">Drop the image here ...</p>
         ) : (
-          <p className='text-green-600'>Drag &apos;n&apos; drop an image here, or click to select a file</p>
+          <p className='text-green-600 text-sm sm:text-base'>Drag &apos;n&apos; drop an image here, or click to select a file</p>
         )}
       </div>
-      <div className="mt-4 flex justify-center space-x-4">
+      <div className="mt-4 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 shadow-md"
+          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 shadow-md text-sm sm:text-base"
         >
           Upload Image
         </button>
         <button
           onClick={handleCameraCapture}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 shadow-md"
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 shadow-md text-sm sm:text-base"
         >
           Take Photo
         </button>
@@ -156,7 +156,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setPlantInfo, setImageUrl }) 
         onChange={handleFileUpload}
         className="hidden"
       />
-      {/* {isLoading && <p className="mt-4 text-green-800 font-semibold">Identifying plant...</p>} */}
       {isLoading && <BookLoader />}
     </div>
   );

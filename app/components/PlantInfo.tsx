@@ -38,33 +38,44 @@ export default function PlantInfo({ info }: PlantInfoProps) {
     // Use useCallback to memoize the fetchImageFromWikipedia function
     const fetchImageFromWikipedia = useCallback(async (query: string): Promise<string> => {
         try {
-            let url = `https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${encodeURIComponent(query)}&prop=text&redirects&origin=*`;
-            
-            if (query.startsWith('https://en.wikipedia.org/wiki/')) {
-                const pageName = query.split('/').pop();
-                url = `https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${pageName}&prop=text&redirects&origin=*`;
-            }
+            const searchVariations = [
+                query,
+                query.split("'")[0].trim(),
+                query.split(/[([{/'"]/, 1)[0].trim()
+            ];
 
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.parse && data.parse.text) {
-                const htmlContent = data.parse.text['*'];
-                const imgRegex = /<img[^>]+src="((?:https?:)?\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[^"]+)"[^>]*>/gi;
-                const matches = [...htmlContent.matchAll(imgRegex)];
+            for (const searchQuery of searchVariations) {
+                let url = `https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${encodeURIComponent(searchQuery)}&prop=text&redirects&origin=*`;
                 
-                for (const match of matches) {
-                    let imgUrl = match[1];
-                    if (!imgUrl.startsWith('http')) {
-                        imgUrl = `https:${imgUrl}`;
-                    }
-                    if (isValidPlantImage(imgUrl)) {
-                        return imgUrl;
+                if (searchQuery.startsWith('https://en.wikipedia.org/wiki/')) {
+                    const pageName = searchQuery.split('/').pop();
+                    url = `https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${pageName}&prop=text&redirects&origin=*`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.parse && data.parse.text) {
+                    const htmlContent = data.parse.text['*'];
+                    const imgRegex = /<img[^>]+src="((?:https?:)?\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[^"]+)"[^>]*>/gi;
+                    const matches = [...htmlContent.matchAll(imgRegex)];
+                    
+                    for (const match of matches) {
+                        let imgUrl = match[1];
+                        if (!imgUrl.startsWith('http')) {
+                            imgUrl = `https:${imgUrl}`;
+                        }
+                        if (isValidPlantImage(imgUrl)) {
+                            return imgUrl;
+                        }
                     }
                 }
+                
+                // If no valid image found, continue to the next search variation
             }
             
-            return query.startsWith('https://en.wikipedia.org/wiki/') ? query : `https://en.wikipedia.org/wiki/${encodeURIComponent(query)}`;
+            // If no image found after trying all variations, return a search URL
+            return `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(query)}`;
         } catch (error) {
             console.error("Error fetching Wikipedia image:", error);
             return `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(query)}`;
@@ -104,9 +115,9 @@ export default function PlantInfo({ info }: PlantInfoProps) {
     };
 
     return (
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-lg w-full max-w-2xl mx-auto">
             {imageUrl && (
-                <div className="mb-4 relative w-full h-64">
+                <div className="mb-4 relative w-full h-48 sm:h-56 md:h-64">
                     <Image 
                         src={imageUrl} 
                         alt={plantData['Common name'] || 'Plant'} 
@@ -116,14 +127,14 @@ export default function PlantInfo({ info }: PlantInfoProps) {
                     />
                 </div>
             )}
-            <h2 className="text-3xl font-semibold mb-4 text-green-800">{plantData['Common name'] || 'Unknown Plant'}</h2>
-            <h3 className="text-xl font-semibold mb-4 text-green-600 italic">{plantData['Scientific name'] || 'Species unknown'}</h3>
-            <p className="text-gray-700 mb-6">{plantData['Description'] || 'No description available.'}</p>
-            <div className="flex gap-6 items-center">
-                <a target="_blank" rel="noopener noreferrer" className="text-white bg-red-600 px-4 py-2 rounded-lg" href={`https://google.com/search?q=${encodeURIComponent(plantData['Scientific name'] || '')}`}>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-2 sm:mb-4 text-green-800">{plantData['Common name'] || 'Unknown Plant'}</h2>
+            <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4 text-green-600 italic">{plantData['Scientific name'] || 'Species unknown'}</h3>
+            <p className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6">{plantData['Description'] || 'No description available.'}</p>
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-stretch sm:items-center">
+                <a target="_blank" rel="noopener noreferrer" className="text-white bg-red-600 px-4 py-2 rounded-lg text-center" href={`https://google.com/search?q=${encodeURIComponent(plantData['Scientific name'] || '')}`}>
                     <i className="fas fa-search mr-1"></i> Search on Google
                 </a>
-                <Link href="/plant-details" onClick={handleDetailsClick} className="text-black bg-green-200 px-4 py-2 rounded-lg">
+                <Link href="/plant-details" onClick={handleDetailsClick} className="text-black bg-green-200 px-4 py-2 rounded-lg text-center">
                     Details
                 </Link>
             </div>

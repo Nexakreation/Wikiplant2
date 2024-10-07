@@ -71,7 +71,15 @@ export default function PlantDetails() {
                 const doc = parser.parseFromString(htmlContent, 'text/html');
                 const paragraphs = Array.from(doc.querySelectorAll('p')).map(p => p.textContent);
                 const selectedParagraphs = paragraphs.filter((p): p is string => p !== null && p.trim() !== '').slice(0, 10);
-                setWikipediaExtract(selectedParagraphs.join('\n\n'));
+                
+                // Remove unwanted CSS classes
+                const cleanedParagraphs = selectedParagraphs.map(p => 
+                    p.replace(/\.mw-parser-output [^{]+\{[^}]+\}/g, '')
+                     .replace(/\.sr-only[^{]+\{[^}]+\}/g, '')
+                     .trim()
+                );
+                
+                setWikipediaExtract(cleanedParagraphs.join('\n\n'));
             }
         } catch (error) {
             console.error('Error fetching Wikipedia information:', error);
@@ -108,96 +116,131 @@ export default function PlantDetails() {
         );
     };
 
-    return (
-        <div className="container mx-auto pt-8 flex gap-6">
-            <div className='w-1/5'>
-                <h3 className="text-xl font-semibold mb-4 text-green-700"></h3>
-                {additionalImages.slice(0, 5).map((img, index) => (
-                    <div key={index} className="mb-6">
-                        <Image
-                            src={img}
-                            alt={`Additional plant image ${index + 1}`}
-                            width={200}
-                            height={200}
-                            objectFit="cover"
-                            className="rounded-lg shadow-lg"
-                        />
-                        <div className="mt-2">
-                            {getPlantInfoSubset(index)}
-                        </div>
+    const ContentBlock = ({ title, content, image, index }: { title: string, content: string, image?: string, index: number }) => (
+        <div className="mb-4"> {/* Reduced from mb-8 to mb-4 */}
+            {title && <h3 className="text-xl sm:text-2xl font-semibold mb-2 text-green-700">{title}</h3>}
+            <div className="text-base sm:text-lg md:text-xl whitespace-pre-wrap mb-2">{content}</div> {/* Reduced from mb-4 to mb-2 */}
+            {image && (
+                <div className="mb-2 lg:hidden"> {/* Reduced from mb-4 to mb-2 */}
+                    <Image
+                        src={image}
+                        alt={`Additional plant image ${index + 1}`}
+                        width={400}
+                        height={300}
+                        objectFit="cover"
+                        className="rounded-lg shadow-lg w-full h-auto"
+                    />
+                    <div className="mt-1"> {/* Reduced from mt-2 to mt-1 */}
+                        {getPlantInfoSubset(index)}
                     </div>
-                ))}
-            </div>
-            <div className='w-3/5'>
-                <div className="relative w-full h-64 mb-8">
-                    {!imageError ? (
-                        <Image
-                            src={imageUrl}
-                            alt={plantData['Common name']}
-                            layout="fill"
-                            objectFit="cover"
-                            className="rounded-lg shadow-lg"
-                            onError={handleImageError}
-                        />
-                    ) : (
-                        <div className="w-full h-64 bg-gray-200 flex flex-col items-center justify-center rounded-lg shadow-lg">
-                            <p className="text-black mb-2">Image not available</p>
-                            <p className="text-xs text-gray-600 break-all px-4">{imageUrl}</p>
-                            <Image
-                            src={imageUrl}
-                            alt={plantData['Common name']}
-                            layout="fill"
-                            objectFit="cover"
-                            className="rounded-lg shadow-lg"
-                            onError={handleImageError}
-                        />
-                        </div>
-                    )}
                 </div>
-                <h1 className="text-4xl font-bold mb-4 text-green-800">{plantData['Common name']}</h1>
-                <h2 className="text-2xl font-semibold mb-4 text-green-600 italic">{plantData['Scientific name']}</h2>
-                
-                <h3 className="text-2xl font-semibold mb-2 text-green-700">Description</h3>
-                <div className="text-xl  whitespace-pre-wrap">{plantData['Description']}</div>
-                <p className="mb-8 mt-2 text-opacity-25"><span className="text-green-400 text-opacity-30"> CC BY-SA 3.0 : </span> <a href={`https://en.wikipedia.org/wiki/${plantData['Scientific name']}`} target="_blank" className="text-gray-600">https://en.wikipedia.org/wiki/{plantData['Scientific name']}</a></p>
-                {wikipediaExtract && (
-                    <>
-                        <h3 className="text-2xl font-semibold mb-2 text-green-700">Information</h3>
-                        <div className="text-xl mb-8 whitespace-pre-wrap">{wikipediaExtract}</div>
-                    </>
-                )}
-                
-                <h3 className="text-2xl font-semibold mb-2 text-green-700">Additional Details</h3>
-                <table className="w-full border-collapse mb-8">
-                    <tbody>
-                        {Object.entries(plantData).map(([key, value]) => (
-                            key !== 'Common name' && key !== 'Scientific name' && key !== 'Description' && key !== 'imageUrl' && (
-                                <tr key={key} className="border-b border-gray-200">
-                                    <td className="py-2 px-4 font-semibold text-green-700">{key}</td>
-                                    <td className="py-2 px-4 text-green-600">{value}</td>
-                                </tr>
-                            )
+            )}
+        </div>
+    );
+
+    return (
+        <div className="container mx-auto px-4 py-4 overflow-x-hidden"> {/* Reduced from py-8 to py-4 */}
+            <div className="flex flex-col lg:flex-row gap-4"> {/* Reduced from gap-6 to gap-4 */}
+                <div className='w-full lg:w-1/5 order-2 lg:order-1 hidden lg:block'>
+                    <h3 className="text-xl font-semibold mb-4 text-green-700">{/* Additional Images */}</h3> {/* Reduced from mb-4 to mb-2 */}
+                    <div className="grid grid-cols-1 gap-2"> {/* Reduced from gap-4 to gap-2 */}
+                        {additionalImages.slice(0, 5).map((img, index) => (
+                            <div key={index} className="mb-2"> {/* Reduced from mb-6 to mb-2 */}
+                                <Image
+                                    src={img}
+                                    alt={`Additional plant image ${index + 1}`}
+                                    width={200}
+                                    height={200}
+                                    objectFit="cover"
+                                    className="rounded-lg shadow-lg w-full h-auto"
+                                />
+                                <div className="mt-1"> {/* Reduced from mt-2 to mt-1 */}
+                                    {getPlantInfoSubset(index)}
+                                </div>
+                            </div>
                         ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className='w-1/5'>
-                <h3 className="text-xl font-semibold mb-4 text-green-700"></h3>
-                {additionalImages.slice(5, 10).map((img, index) => (
-                    <div key={index} className="mb-6">
-                        <Image
-                            src={img}
-                            alt={`More plant image ${index + 1}`}
-                            width={200}
-                            height={200}
-                            objectFit="cover"
-                            className="rounded-lg shadow-lg"
-                        />
-                        <div className="mt-2">
-                            {getPlantInfoSubset(index + 5)}
-                        </div>
                     </div>
-                ))}
+                </div>
+                <div className='w-full lg:w-3/5 order-1 lg:order-2'>
+                    <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 mb-2">
+                        {!imageError ? (
+                            <Image
+                                src={imageUrl}
+                                alt={plantData['Common name']}
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-lg shadow-lg"
+                                onError={handleImageError}
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center rounded-lg shadow-lg">
+                                <p className="text-black mb-2">Image not available</p>
+                                <p className="text-xs text-gray-600 break-all px-4">{imageUrl}</p>
+                            </div>
+                        )}
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-green-800">{plantData['Common name']}</h1> {/* Reduced from mb-4 to mb-2 */}
+                    <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-green-600 italic">{plantData['Scientific name']}</h2> {/* Reduced from mb-4 to mb-2 */}
+                    
+                    <ContentBlock title="Description" content={plantData['Description']} index={-1} />
+                    
+                    <p className="mb-4 mt-1 text-opacity-25 text-sm"> {/* Reduced from mb-8 to mb-4 and mt-2 to mt-1 */}
+                        <span className="text-green-400 text-opacity-30"> CC BY-SA 3.0 : </span> 
+                        <a href={`https://en.wikipedia.org/wiki/${plantData['Scientific name']}`} target="_blank" className="text-gray-600">
+                            https://en.wikipedia.org/wiki/{plantData['Scientific name']}
+                        </a>
+                    </p>
+
+                    {wikipediaExtract && (
+                        <>
+                            {wikipediaExtract.split('\n\n').map((paragraph, index) => (
+                                <ContentBlock 
+                                    key={index}
+                                    title={index === 0 ? "Information" : ""}
+                                    content={paragraph}
+                                    image={additionalImages[index]}
+                                    index={index}
+                                />
+                            ))}
+                        </>
+                    )}
+                    
+                    <h3 className="text-xl sm:text-2xl font-semibold mb-2 text-green-700">Additional Details</h3>
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse mb-4"> {/* Reduced from mb-8 to mb-4 */}
+                            <tbody>
+                                {Object.entries(plantData).map(([key, value]) => (
+                                    key !== 'Common name' && key !== 'Scientific name' && key !== 'Description' && key !== 'imageUrl' && (
+                                        <tr key={key} className="border-b border-gray-200">
+                                            <td className="py-1 px-2 font-semibold text-green-700">{key}</td> {/* Reduced padding */}
+                                            <td className="py-1 px-2 text-green-600">{value}</td> {/* Reduced padding */}
+                                        </tr>
+                                    )
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div className='w-full lg:w-1/5 order-3 hidden lg:block'>
+                    <h3 className="text-xl font-semibold mb-4 text-green-700">{/*More Images*/}</h3> {/* Reduced from mb-4 to mb-2 */}
+                    <div className="grid grid-cols-1 gap-2"> {/* Reduced from gap-4 to gap-2 */}
+                        {additionalImages.slice(5, 10).map((img, index) => (
+                            <div key={index} className="mb-2">
+                                <Image
+                                    src={img}
+                                    alt={`More plant image ${index + 1}`}
+                                    width={200}
+                                    height={200}
+                                    objectFit="cover"
+                                    className="rounded-lg shadow-lg w-full h-auto"
+                                />
+                                <div className="mt-1"> {/* Reduced from mt-2 to mt-1 */}
+                                    {getPlantInfoSubset(index + 5)}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );

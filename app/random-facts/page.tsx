@@ -80,14 +80,41 @@ export default function RandomFacts() {
     }, [fetchRandomPlantFromWikipedia]);
 
     const fetchWikipediaImage = useCallback(async (plantName: string): Promise<string> => {
-        try {
-            const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(plantName)}`);
-            const data = await response.json();
-            return data.thumbnail?.source || '/placeholder-image.jpg';
-        } catch (error) {
-            console.error("Error fetching Wikipedia image:", error);
-            return '/placeholder-image.jpg';
+        const cleanPlantName = (name: string): string => {
+            // Remove any text after "spp." including "spp." itself
+            name = name.split(' spp.')[0].trim();
+            // Remove any text in parentheses
+            name = name.replace(/\s*\([^)]*\)/g, '');
+            // Remove any trailing whitespace
+            return name.trim();
+        };
+
+        const tryFetchImage = async (name: string): Promise<string | null> => {
+            try {
+                const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+                const data = await response.json();
+                return data.thumbnail?.source || null;
+            } catch (error) {
+                console.error(`Error fetching Wikipedia image for ${name}:`, error);
+                return null;
+            }
+        };
+
+        const cleanedName = cleanPlantName(plantName);
+        let imageUrl = await tryFetchImage(cleanedName);
+
+        if (!imageUrl && cleanedName.includes(' ')) {
+            // If no image found and it's a binomial name, try with just the genus
+            const genus = cleanedName.split(' ')[0];
+            imageUrl = await tryFetchImage(genus);
         }
+
+        if (!imageUrl) {
+            // If still no image, try with the original plant name
+            imageUrl = await tryFetchImage(plantName);
+        }
+
+        return imageUrl || '/placeholder-image.jpg';
     }, []);
 
     const fetchFacts = useCallback(async (count: number): Promise<Fact[]> => {
@@ -199,11 +226,11 @@ export default function RandomFacts() {
     };
 
     return (
-        <div className="min-h-screen p-8">
-            <h1 className="text-4xl font-bold mb-8 text-green-800 text-center">Random Plant Facts</h1>
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen p-4 sm:p-6 md:p-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 md:mb-8 text-green-800 text-center">Random Plant Facts</h1>
+            <div className="max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto">
                 {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 sm:px-4 sm:py-3 rounded relative mb-4 sm:mb-6" role="alert">
                         <strong className="font-bold">Error: </strong>
                         <span className="block sm:inline">{error}</span>
                     </div>
@@ -212,22 +239,30 @@ export default function RandomFacts() {
                     <div
                         key={index}
                         ref={index === facts.length - 1 ? lastFactElementRef : null}
-                        className="bg-white p-6 rounded-lg shadow-lg mb-6"
+                        className="bg-white p-4 sm:p-6 rounded-lg shadow-lg mb-4 sm:mb-6"
                     >
-                        <Image src={fact.imageUrl} alt="Fact Image" width={500} height={300} className="w-full h-48 object-cover rounded-lg mb-4" />
-                        <p className="text-lg text-gray-800 mb-4">{fact.text}</p>
-                        <div className="flex justify-between items-center">
-                            <p className="text-sm text-gray-500">Source: {fact.source}</p>
-                            <div>
+                        <div className="relative w-full h-32 sm:h-48 md:h-64 mb-3 sm:mb-4">
+                            <Image 
+                                src={fact.imageUrl} 
+                                alt="Fact Image" 
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-lg"
+                            />
+                        </div>
+                        <p className="text-base sm:text-lg text-gray-800 mb-3 sm:mb-4">{fact.text}</p>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                            <p className="text-sm text-gray-500 mb-2 sm:mb-0">Source: {fact.source}</p>
+                            <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => openGoogleSearch(fact.plantName)}
-                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded text-sm"
                                 >
                                     Google Search
                                 </button>
                                 <button
                                     onClick={() => openWikipediaPage(fact.plantName)}
-                                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded text-sm"
                                 >
                                     Wikipedia
                                 </button>
