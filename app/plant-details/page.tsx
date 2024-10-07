@@ -30,30 +30,38 @@ export default function PlantDetails() {
         // Remove italics markers
         name = name.replace(/[_*]/g, '');
         
+        // Remove text in single quotes (cultivar names)
+        name = name.replace(/'[^']*'/g, '');
+        
         // Remove text in parentheses
         name = name.replace(/\s*\([^)]*\)/g, '');
         
-        // Remove "spp." and trim
-        name = name.replace(/\s*spp\.?/i, '').trim();
+        // Remove "spp.", "var.", "subsp.", and similar taxonomic rank indicators
+        name = name.replace(/\s*(spp\.|var\.|subsp\.|f\.|cv\.).*$/i, '');
+        
+        // Remove any remaining special characters and extra spaces
+        name = name.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
         
         // If it's a genus, just return the genus name
-        if (name.toLowerCase().includes('genus')) {
-          return name.split(' ')[0];
+        if (name.split(' ').length === 1) {
+            return name;
         }
         
-        return name;
+        // Return only the genus and species (first two words)
+        return name.split(' ').slice(0, 2).join(' ');
     };
 
     const fetchWikipediaInfo = async (scientificName: string, commonName: string) => {
         try {
-            const response = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${encodeURIComponent(scientificName)}&prop=text&origin=*`);
+            const cleanedScientificName = cleanScientificName(scientificName);
+            const response = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${encodeURIComponent(cleanedScientificName)}&prop=text&origin=*`);
             const data = await response.json();
             
             if (data.parse && data.parse.text) {
                 const htmlContent = data.parse.text['*'];
                 
                 // Extract main image URL
-                const imgRegex = new RegExp(`<img[^>]+src="(//upload\\.wikimedia\\.org/wikipedia/commons/[^"]+(?:${scientificName.replace(/\s+/g, '_')}|${commonName.replace(/\s+/g, '_')}).[^"]+)"`, 'i');
+                const imgRegex = new RegExp(`<img[^>]+src="(//upload\\.wikimedia\\.org/wikipedia/commons/[^"]+(?:${cleanedScientificName.replace(/\s+/g, '_')}|${commonName.replace(/\s+/g, '_')}).[^"]+)"`, 'i');
                 const match = htmlContent.match(imgRegex);
                 if (match && match[1] && !match[1].includes('OOjs_UI_icon')) {
                     setWikipediaImageUrl(`https:${match[1]}`);

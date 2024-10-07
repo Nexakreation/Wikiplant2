@@ -81,12 +81,21 @@ export default function RandomFacts() {
 
     const fetchWikipediaImage = useCallback(async (plantName: string): Promise<string> => {
         const cleanPlantName = (name: string): string => {
-            // Remove any text after "spp." including "spp." itself
-            name = name.split(' spp.')[0].trim();
-            // Remove any text in parentheses
+            // Remove text in single quotes (cultivar names)
+            name = name.replace(/'[^']*'/g, '');
+            
+            // Remove text in parentheses
             name = name.replace(/\s*\([^)]*\)/g, '');
-            // Remove any trailing whitespace
-            return name.trim();
+            
+            // Remove "spp.", "var.", "subsp.", and similar taxonomic rank indicators
+            name = name.replace(/\s*(spp\.|var\.|subsp\.|f\.|cv\.).*$/i, '');
+            
+            // Remove any remaining special characters and extra spaces
+            name = name.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+            
+            // If it's more than two words, keep only the first two (genus and species)
+            const words = name.split(' ');
+            return words.length > 2 ? words.slice(0, 2).join(' ') : name;
         };
 
         const tryFetchImage = async (name: string): Promise<string | null> => {
