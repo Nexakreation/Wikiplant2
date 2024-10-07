@@ -16,6 +16,11 @@ bun dev
 before run or deploy make sure to make .env.local file and add content:
 NEXT_PUBLIC_GOOGLE_API_KEY="YOUR_ACTUAL_API_KEY"
 
+## Environment Setup
+
+1. Copy `.env.example` to `.env.local`
+2. Replace `YOUR_ACTUAL_API_KEY_HERE` in `.env.local` with your Google API key
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
