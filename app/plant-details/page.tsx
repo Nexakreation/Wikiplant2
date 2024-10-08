@@ -194,8 +194,8 @@ export default function PlantDetails() {
                     
                     <p className="mb-4 mt-1 text-opacity-25 text-sm"> {/* Reduced from mb-8 to mb-4 and mt-2 to mt-1 */}
                         <span className="text-green-400 text-opacity-30"> CC BY-SA 3.0 : </span> 
-                        <a href={`https://en.wikipedia.org/wiki/${plantData['Scientific name']}`} target="_blank" className="text-gray-600">
-                            https://en.wikipedia.org/wiki/{plantData['Scientific name']}
+                        <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(cleanScientificName(plantData['Scientific name']))}`} target="_blank" className="text-gray-600">
+                            https://en.wikipedia.org/wiki/{cleanScientificName(plantData['Scientific name'])}
                         </a>
                     </p>
 

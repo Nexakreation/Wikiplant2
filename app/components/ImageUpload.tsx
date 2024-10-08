@@ -3,63 +3,153 @@
 import React from 'react';
 import { useState, useRef, useCallback } from 'react';
 import BookLoader from './BookLoader';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useDropzone } from 'react-dropzone';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-interface ImageUploadProps {
-  setPlantInfo: (info: string) => void;
-  setImageUrl: (url: string) => void;
+// Add this near the top of your component, after the imports
+if (!process.env.NEXT_PUBLIC_GOOGLE_API_KEY) {
+  console.error('NEXT_PUBLIC_GOOGLE_API_KEY is not set');
 }
 
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_API_KEY as string);
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ setPlantInfo, setImageUrl }) => {
+interface ImageUploadProps {
+  setPlantInfo: (info: string) => void;
+  setImageUrl: (url: string) => void;
+  setConfidence: (confidence: number | null) => void; // Add this line
+}
+
+interface PlantIdentification {
+  commonName: string;
+  scientificName: string;
+  confidence: number;
+}
+
+const ImageUpload: React.FC<ImageUploadProps> = ({ setPlantInfo, setImageUrl, setConfidence }) => {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const identifyPlantWithPlantId = async (file: File): Promise<PlantIdentification> => {
+    const formData = new FormData();
+    formData.append('images', file);
+
+    console.log('Sending request to Plant.id API...');
+    const response = await fetch('/api/identify-plant', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      console.error('Plant.id API response not OK:', response.status, response.statusText);
+      throw new Error('Failed to identify plant with Plant.id');
+    }
+
+    const data = await response.json();
+    console.log('Plant.id API response:', JSON.stringify(data, null, 2));
+
+    if (data.suggestions && data.suggestions.length > 0) {
+      const plantData = {
+        commonName: data.suggestions[0].plant_name,
+        scientificName: data.suggestions[0].plant_details.scientific_name,
+        confidence: data.suggestions[0].probability
+      };
+      console.log('Extracted plant data:', plantData);
+      return plantData;
+    } else {
+      console.error('No plant suggestions found in Plant.id response');
+      throw new Error('No plant identification found');
+    }
+  };
+
+  const getAdditionalInfoFromGemini = async (plantName: string): Promise<string> => {
+    try {
+      console.log('Initializing Gemini model...');
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      const prompt = `Provide detailed information about the plant "${plantName}" in a structured format with the following labels:
+      Common name:
+      Scientific name:
+      Family:
+      Description:
+      Flower characteristics:
+      Leaf characteristics:
+      Plant height:
+      Blooming season:
+      Sunlight requirements:
+      Water needs:
+      Soil type:
+      Growth rate:
+      Hardiness zones:
+      Native region:
+      Potential uses:
+      Care tips:
+      Interesting facts:`;
+
+      console.log('Sending request to Gemini API with prompt:', prompt);
+      const result = await model.generateContent(prompt);
+      console.log('Received result from Gemini API:', result);
+      
+      const response = await result.response;
+      console.log('Extracted response from result:', response);
+      
+      const text = response.text();
+      console.log('Extracted text from response:', text);
+      
+      if (!text || text.trim() === '') {
+        throw new Error('Received empty response from Gemini API');
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('Error in getAdditionalInfoFromGemini:', error);
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      return `Error getting additional information: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
+  };
 
   const handleImage = useCallback(async (file: File) => {
     if (file) {
       setIsLoading(true);
       setPlantInfo('');
       setImageUrl('');
+      setConfidence(null); // Reset confidence
       try {
         setImageUrl(URL.createObjectURL(file));
-        const imageData = await fileToGenerativePart(file);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // Identify the plant using Plant.id
+        const plantData = await identifyPlantWithPlantId(file);
+        console.log('Plant.id identification:', plantData);
+        
+        // Set confidence for display in the card
+        setConfidence(plantData.confidence);
+        
+        // Get additional information from Gemini
+        const additionalInfo = await getAdditionalInfoFromGemini(plantData.commonName);
+        console.log('Gemini additional info:', additionalInfo);
+        
+        if (additionalInfo.startsWith('Error getting additional information')) {
+          throw new Error(additionalInfo);
+        }
+        
+        setPlantInfo(`Plant identified as: ${plantData.commonName}
+Scientific name: ${plantData.scientificName}
+Confidence: ${(plantData.confidence * 100).toFixed(2)}%
 
-        const result = await model.generateContent([
-          "Identify this plant and provide the following information in a structured format with labels: " +
-          "Common name: " +
-          "Scientific name: " +
-          "Family: " +
-          "Description: " +
-          "Flower characteristics: " +
-          "Leaf characteristics: " +
-          "Plant height: " +
-          "Blooming season: " +
-          "Sunlight requirements: " +
-          "Water needs: " +
-          "Soil type: " +
-          "Growth rate: " +
-          "Hardiness zones: " +
-          "Native region: " +
-          "Potential uses: " +
-          "Care tips: " +
-          "Interesting facts: ",
-          imageData,
-        ]);
-
-        const response = await result.response;
-        const text = response.text();
-        setPlantInfo(text);
+Additional Information:
+${additionalInfo}`);
       } catch (error) {
-        console.error("Error identifying plant:", error);
-        setPlantInfo(`Error identifying plant: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error("Error processing plant:", error);
+        setPlantInfo(`Error processing plant: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setConfidence(null); // Reset confidence on error
       } finally {
         setIsLoading(false);
       }
     }
-  }, [setPlantInfo, setImageUrl]);
+  }, [setPlantInfo, setImageUrl, setConfidence]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     handleImage(acceptedFiles[0]);
@@ -127,7 +217,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setPlantInfo, setImageUrl }) 
 
   return (
     <div className="mb-4 sm:mb-8 px-4 sm:px-0">
-      <div {...getRootProps()} className={`p-4 sm:p-8 border-2 border-dashed rounded-lg ${isDragActive ? 'border-blue-500 bg-gray-100' : 'border-green-600'}`}>
+      <div className="p-4 sm:p-8 border-2 border-dashed rounded-lg" {...getRootProps()} style={{ border: isDragActive ? '2px solid #2196F3' : '2px dashed #ccc', backgroundColor: isDragActive ? '#f9fafb' : 'transparent' }}>
         <input {...getInputProps()} />
         {isDragActive ? (
           <p className="text-blue-500 text-sm sm:text-base">Drop the image here ...</p>

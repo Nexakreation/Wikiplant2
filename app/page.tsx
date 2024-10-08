@@ -25,6 +25,7 @@ export default function Home() {
   const [multiSpeciesData, setMultiSpeciesData] = useState<SpeciesData[] | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<number | null>(null);  // New state for confidence
 
   const handleSearch = async () => {
     setIsLoading(true);
@@ -321,7 +322,7 @@ ${additionalInfo}`;
       </p>
       <SearchBar onSearch={handleSearch} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       <div className="w-full max-w-2xl">
-        <ImageUpload setPlantInfo={setPlantInfo} setImageUrl={setImageUrl} />
+        <ImageUpload setPlantInfo={setPlantInfo} setImageUrl={setImageUrl} setConfidence={setConfidence} />
       </div>
       {isLoading && <BookLoader />}
       {error && <p className="mt-4 text-red-600 font-semibold text-sm sm:text-base">{error}</p>}
@@ -334,6 +335,11 @@ ${additionalInfo}`;
             objectFit="cover"
             className="rounded-lg shadow-lg"
           />
+          {confidence !== null && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-1">
+              Confidence: {(confidence * 100).toFixed(2)}%
+            </div>
+          )}
         </div>
       )}
       {plantInfo && <PlantInfo info={plantInfo} />}
@@ -343,16 +349,16 @@ ${additionalInfo}`;
           <h2 className="text-xl sm:text-2xl font-bold mb-4">Multiple Species Found</h2>
           {multiSpeciesData.map((species, index) => (
             <div key={index} className="mb-4 p-4 border rounded flex flex-col sm:flex-row">
-              <div className="mb-4 sm:mb-0 sm:mr-4 relative w-full sm:h-auto sm:w-2/5 h-32">
+              <div className="mb-4 sm:mb-0 sm:mr-4 relative w-full sm:w-1/5 h-36">
                 <Image 
                   src={species.imageUrl} 
                   alt={species.commonName} 
                   layout="fill"
                   objectFit="cover"
-                  className="rounded-lg shadow-lg"
+                  className="rounded-lg shadow-lg w-full h-full"
                 />
               </div>
-              <div className="w-full sm:w-3/5">
+              <div className="w-full sm:w-4/5">
                 <h3 className="text-lg sm:text-xl font-semibold">{species.commonName}</h3>
                 <p className="text-sm sm:text-base"><strong>Scientific Name:</strong> {species.scientificName}</p>
                 <p className="text-sm sm:text-base">{species.description}</p>
