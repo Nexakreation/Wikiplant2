@@ -69,8 +69,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setPlantInfo, setImageUrl, se
       const prompt = `Provide detailed information about the plant "${plantName}" in a structured format with the following labels:
       Common name:
       Scientific name:
+      Description of ${plantName}:
       Family:
-      Description:
       Flower characteristics:
       Leaf characteristics:
       Plant height:
