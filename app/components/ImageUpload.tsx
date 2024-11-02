@@ -69,8 +69,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ setPlantInfo, setImageUrl, se
       const prompt = `Provide detailed information about the plant "${plantName}" in a structured format with the following labels:
       Common name:
       Scientific name:
+      Description of ${plantName}:
       Family:
-      Description:
       Flower characteristics:
       Leaf characteristics:
       Plant height:
@@ -156,22 +156,6 @@ ${additionalInfo}`);
   }, [handleImage]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
-
-  async function fileToGenerativePart(file: File) {
-    const base64EncodedDataPromise = new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          resolve(reader.result.split(',')[1]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-
-    return {
-      inlineData: { data: await base64EncodedDataPromise, mimeType: file.type },
-    };
-  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

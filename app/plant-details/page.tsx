@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 
 interface PlantData {
@@ -14,6 +14,48 @@ export default function PlantDetails() {
     const [additionalImages, setAdditionalImages] = useState<string[]>([]);
     const [imageError, setImageError] = useState<boolean>(false);
 
+    const fetchWikipediaInfo = useCallback(async (scientificName: string, commonName: string) => {
+        try {
+            const cleanedScientificName = cleanScientificName(scientificName);
+            const response = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${encodeURIComponent(cleanedScientificName)}&prop=text&origin=*`);
+            const data = await response.json();
+            
+            if (data.parse && data.parse.text) {
+                const htmlContent = data.parse.text['*'];
+                
+                // Extract main image URL
+                const imgRegex = new RegExp(`<img[^>]+src="(//upload\\.wikimedia\\.org/wikipedia/commons/[^"]+(?:${cleanedScientificName.replace(/\s+/g, '_')}|${commonName.replace(/\s+/g, '_')}).[^"]+)"`, 'i');
+                const match = htmlContent.match(imgRegex);
+                if (match && match[1] && !match[1].includes('OOjs_UI_icon')) {
+                    setWikipediaImageUrl(`https:${match[1]}`);
+                }
+
+                // Extract additional images
+                const additionalImgRegex = /<img[^>]+src="(\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[^"]+)"[^>]*>/g;
+                const additionalMatches = [...htmlContent.matchAll(additionalImgRegex)];
+                const uniqueAdditionalImages = Array.from(new Set(additionalMatches.map(m => `https:${m[1]}`)))
+                    .filter(url => !url.includes('OOjs_UI_icon') && !url.includes('edit-ltr.svg'));
+                setAdditionalImages(uniqueAdditionalImages.slice(0, 10));
+
+                // Extract paragraphs
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+                const paragraphs = Array.from(doc.querySelectorAll('p')).map(p => p.textContent);
+                const selectedParagraphs = paragraphs.filter((p): p is string => p !== null && p.trim() !== '').slice(0, 10);
+                
+                const cleanedParagraphs = selectedParagraphs.map(p => 
+                    p.replace(/\.mw-parser-output [^{]+\{[^}]+\}/g, '')
+                     .replace(/\.sr-only[^{]+\{[^}]+\}/g, '')
+                     .trim()
+                );
+                
+                setWikipediaExtract(cleanedParagraphs.join('\n\n'));
+            }
+        } catch (error) {
+            console.error('Error fetching Wikipedia information:', error);
+        }
+    }, []);
+
     useEffect(() => {
         const storedData = sessionStorage.getItem('currentPlantData');
         if (storedData) {
@@ -24,7 +66,7 @@ export default function PlantDetails() {
                 fetchWikipediaInfo(cleanedScientificName, parsedData['Common name']);
             }
         }
-    }, []);
+    }, [fetchWikipediaInfo]);
 
     const cleanScientificName = (name: string): string => {
         // Remove italics markers
@@ -49,49 +91,6 @@ export default function PlantDetails() {
         
         // Return only the genus and species (first two words)
         return name.split(' ').slice(0, 2).join(' ');
-    };
-
-    const fetchWikipediaInfo = async (scientificName: string, commonName: string) => {
-        try {
-            const cleanedScientificName = cleanScientificName(scientificName);
-            const response = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&format=json&page=${encodeURIComponent(cleanedScientificName)}&prop=text&origin=*`);
-            const data = await response.json();
-            
-            if (data.parse && data.parse.text) {
-                const htmlContent = data.parse.text['*'];
-                
-                // Extract main image URL
-                const imgRegex = new RegExp(`<img[^>]+src="(//upload\\.wikimedia\\.org/wikipedia/commons/[^"]+(?:${cleanedScientificName.replace(/\s+/g, '_')}|${commonName.replace(/\s+/g, '_')}).[^"]+)"`, 'i');
-                const match = htmlContent.match(imgRegex);
-                if (match && match[1] && !match[1].includes('OOjs_UI_icon')) {
-                    setWikipediaImageUrl(`https:${match[1]}`);
-                }
-
-                // Extract additional images
-                const additionalImgRegex = /<img[^>]+src="(\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[^"]+)"[^>]*>/g;
-                const additionalMatches = [...htmlContent.matchAll(additionalImgRegex)];
-                const uniqueAdditionalImages = Array.from(new Set(additionalMatches.map(m => `https:${m[1]}`)))
-                    .filter(url => !url.includes('OOjs_UI_icon') && !url.includes('edit-ltr.svg'));
-                setAdditionalImages(uniqueAdditionalImages.slice(0, 10)); // Limit to 10 images
-
-                // Extract paragraphs
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlContent, 'text/html');
-                const paragraphs = Array.from(doc.querySelectorAll('p')).map(p => p.textContent);
-                const selectedParagraphs = paragraphs.filter((p): p is string => p !== null && p.trim() !== '').slice(0, 10);
-                
-                // Remove unwanted CSS classes
-                const cleanedParagraphs = selectedParagraphs.map(p => 
-                    p.replace(/\.mw-parser-output [^{]+\{[^}]+\}/g, '')
-                     .replace(/\.sr-only[^{]+\{[^}]+\}/g, '')
-                     .trim()
-                );
-                
-                setWikipediaExtract(cleanedParagraphs.join('\n\n'));
-            }
-        } catch (error) {
-            console.error('Error fetching Wikipedia information:', error);
-        }
     };
 
     if (!plantData) {
