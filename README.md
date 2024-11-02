@@ -15,6 +15,8 @@ bun dev
 ```
 before run or deploy make sure to make .env.local file and add content:
 NEXT_PUBLIC_GOOGLE_API_KEY="YOUR_ACTUAL_API_KEY"
+PLANT_ID_API_KEY="YOUR_ACTUAL_API_KEY"
+PLANT_ID_API_KEY_2="YOUR_ACTUAL_API_KEY"
 
 ## Environment Setup
 
