@@ -9,7 +9,7 @@ import Script from 'next/script'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PlantID - Identify and Learn About Plants',
+  title: 'Wikiplant - Identify and Learn About Plants',
   description: 'Identify plants using AI and learn about their characteristics and care.',
 }
 
